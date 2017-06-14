@@ -19,11 +19,15 @@ open class SKPhotoBrowser: UIViewController {
     fileprivate var deleteButton: SKDeleteButton!
     fileprivate var toolbar: SKToolbar!
     
+    // 自定义属性
+    fileprivate var customCloseButton: UIButton!
+    fileprivate var customToolbar: KrToolBar!
+    
     // actions
     fileprivate var activityViewController: UIActivityViewController!
     open var activityItemProvider: UIActivityItemProvider? = nil
     fileprivate var panGesture: UIPanGestureRecognizer!
-
+    
     // tool for controls
     fileprivate var applicationWindow: UIWindow!
     fileprivate lazy var pagingScrollView: SKPagingScrollView = SKPagingScrollView(frame: self.view.frame, browser: self)
@@ -120,7 +124,7 @@ open class SKPhotoBrowser: UIViewController {
         
         animator.willPresent(self)
     }
-
+    
     
     override open func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(true)
@@ -150,7 +154,7 @@ open class SKPhotoBrowser: UIViewController {
     override open func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(true)
         isViewActive = true
-
+        
     }
     
     override open var prefersStatusBarHidden: Bool {
@@ -193,6 +197,7 @@ open class SKPhotoBrowser: UIViewController {
         isPerformingLayout = true
         
         toolbar.updateToolbar(currentPageIndex)
+        customToolbar.updateToolbar(currentPageIndex)
         
         // reset local cache
         pagingScrollView.reload()
@@ -214,7 +219,7 @@ open class SKPhotoBrowser: UIViewController {
     
     open func dismissPhotoBrowser(animated: Bool, completion: ((Void) -> Void)? = nil) {
         prepareForClosePhotoBrowser()
-
+        
         if !animated {
             modalTransitionStyle = .crossDissolve
         }
@@ -224,7 +229,7 @@ open class SKPhotoBrowser: UIViewController {
             self.delegate?.didDismissAtPageIndex?(self.currentPageIndex)
         }
     }
-
+    
     open func determineAndClose() {
         delegate?.willDismissAtPageIndex?(currentPageIndex)
         animator.willDismiss(self)
@@ -234,23 +239,23 @@ open class SKPhotoBrowser: UIViewController {
 // MARK: - Public Function For Customizing Buttons
 
 public extension SKPhotoBrowser {
-  func updateCloseButton(_ image: UIImage, size: CGSize? = nil) {
+    func updateCloseButton(_ image: UIImage, size: CGSize? = nil) {
         if closeButton == nil {
             configureCloseButton()
         }
         closeButton.setImage(image, for: UIControlState())
-    
+        
         if let size = size {
             closeButton.setFrameSize(size)
         }
     }
-  
-  func updateDeleteButton(_ image: UIImage, size: CGSize? = nil) {
+    
+    func updateDeleteButton(_ image: UIImage, size: CGSize? = nil) {
         if deleteButton == nil {
             configureDeleteButton()
         }
         deleteButton.setImage(image, for: UIControlState())
-    
+        
         if let size = size {
             deleteButton.setFrameSize(size)
         }
@@ -284,6 +289,7 @@ public extension SKPhotoBrowser {
             }
             isEndAnimationByToolBar = false
             toolbar.updateToolbar(currentPageIndex)
+            customToolbar.updateToolbar(currentPageIndex)
             
             let pageFrame = frameForPageAtIndex(index)
             pagingScrollView.animate(pageFrame)
@@ -301,6 +307,10 @@ public extension SKPhotoBrowser {
     
     func gotoNextPage() {
         jumpToPageAtIndex(currentPageIndex + 1)
+    }
+    
+    func downloadPhotoAction() {
+        delegate?.didDownloadPhotoAtIndex?(currentPageIndex, photo: photos[currentPageIndex].underlyingImage)
     }
     
     func cancelControlHiding() {
@@ -544,7 +554,7 @@ internal extension SKPhotoBrowser {
     }
 }
 
-// MARK: - Private Function 
+// MARK: - Private Function
 private extension SKPhotoBrowser {
     func configureAppearance() {
         view.backgroundColor = SKPhotoBrowserOptions.backgroundColor
@@ -572,6 +582,16 @@ private extension SKPhotoBrowser {
         closeButton.addTarget(self, action: #selector(closeButtonPressed(_:)), for: .touchUpInside)
         closeButton.isHidden = !SKPhotoBrowserOptions.displayCloseButton
         view.addSubview(closeButton)
+        
+        customCloseButton = UIButton()
+        customCloseButton.frame = CGRect(x: 12, y: 30, width: 27, height: 24)
+        let imageName = "ic_nav_back_white"
+        let image = UIImage(named: "SKPhotoBrowser.bundle/images/\(imageName)",
+            in: Bundle(for: SKPhotoBrowser.self), compatibleWith: nil) ?? UIImage()
+        customCloseButton.setImage(image, for: UIControlState())
+        customCloseButton.addTarget(self, action: #selector(closeButtonPressed(_:)), for: .touchUpInside)
+        customCloseButton.isHidden = !SKPhotoBrowserOptions.displayCustomCloseButton
+        view.addSubview(customCloseButton)
     }
     
     func configureDeleteButton() {
@@ -584,6 +604,9 @@ private extension SKPhotoBrowser {
     func configureToolbar() {
         toolbar = SKToolbar(frame: frameForToolbarAtOrientation(), browser: self)
         view.addSubview(toolbar)
+        
+        customToolbar = KrToolBar(frame: CGRect(x: 0, y: view.frame.size.height - 60, width: view.frame.size.width, height: 60), browser: self)
+        view.addSubview(customToolbar)
     }
     
     func setControlsHidden(_ hidden: Bool, animated: Bool, permanent: Bool) {
@@ -592,22 +615,22 @@ private extension SKPhotoBrowser {
         let captionViews = pagingScrollView.getCaptionViews()
         
         UIView.animate(withDuration: 0.35,
-            animations: { () -> Void in
-                let alpha: CGFloat = hidden ? 0.0 : 1.0
-                self.toolbar.alpha = alpha
-                self.toolbar.frame = hidden ? self.frameForToolbarHideAtOrientation() : self.frameForToolbarAtOrientation()
-                
-                if SKPhotoBrowserOptions.displayCloseButton {
-                    self.closeButton.alpha = alpha
-                    self.closeButton.frame = hidden ? self.closeButton.hideFrame : self.closeButton.showFrame
-                }
-                if SKPhotoBrowserOptions.displayDeleteButton {
-                    self.deleteButton.alpha = alpha
-                    self.deleteButton.frame = hidden ? self.deleteButton.hideFrame : self.deleteButton.showFrame
-                }
-                captionViews.forEach { $0.alpha = alpha }
-            },
-            completion: nil)
+                       animations: { () -> Void in
+                        let alpha: CGFloat = hidden ? 0.0 : 1.0
+                        self.toolbar.alpha = alpha
+                        self.toolbar.frame = hidden ? self.frameForToolbarHideAtOrientation() : self.frameForToolbarAtOrientation()
+                        
+                        if SKPhotoBrowserOptions.displayCloseButton {
+                            self.closeButton.alpha = alpha
+                            self.closeButton.frame = hidden ? self.closeButton.hideFrame : self.closeButton.showFrame
+                        }
+                        if SKPhotoBrowserOptions.displayDeleteButton {
+                            self.deleteButton.alpha = alpha
+                            self.deleteButton.frame = hidden ? self.deleteButton.hideFrame : self.deleteButton.showFrame
+                        }
+                        captionViews.forEach { $0.alpha = alpha }
+        },
+                       completion: nil)
         
         if !permanent {
             hideControlsAfterDelay()
@@ -628,7 +651,7 @@ private extension SKPhotoBrowser {
                 gotoPreviousPage()
             }
             toolbar.updateToolbar(currentPageIndex)
-            
+            customToolbar.updateToolbar(currentPageIndex)
         } else if photos.count == 1 {
             dismissPhotoBrowser(animated: true)
         }
@@ -657,6 +680,7 @@ extension SKPhotoBrowser: UIScrollViewDelegate {
         if currentPageIndex != previousCurrentPage {
             delegate?.didShowPhotoAtIndex?(currentPageIndex)
             toolbar.updateToolbar(currentPageIndex)
+            customToolbar.updateToolbar(currentPageIndex)
         }
     }
     

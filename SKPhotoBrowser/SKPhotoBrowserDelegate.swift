@@ -10,6 +10,13 @@ import Foundation
 
 @objc public protocol SKPhotoBrowserDelegate {
     
+    // 自定义delegate
+    /**
+     Tells the delegate that the browser started download a new photo
+     
+     - Parameter index: the index of the new photo
+     */
+    @objc optional func didDownloadPhotoAtIndex(_ index: Int, photo: UIImage)
     /**
      Tells the delegate that the browser started displaying a new photo
      

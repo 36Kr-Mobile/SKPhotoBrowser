@@ -31,6 +31,10 @@ public struct SKPhotoBrowserOptions {
     public static var enableSingleTapDismiss: Bool = false
     
     public static var backgroundColor: UIColor = .black
+    
+    // 自定义新增属性
+    public static var displayCustomToolbar: Bool = false
+    public static var displayCustomCloseButton: Bool = false
 }
 
 public struct SKCaptionOptions {
