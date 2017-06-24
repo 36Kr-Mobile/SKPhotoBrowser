@@ -35,6 +35,7 @@ public struct SKPhotoBrowserOptions {
     // 自定义新增属性
     public static var displayCustomToolbar: Bool = false
     public static var displayCustomCloseButton: Bool = false
+    public static var enableBackgroundColorAnimation: Bool = true
 }
 
 public struct SKCaptionOptions {
