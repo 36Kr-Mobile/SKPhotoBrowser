@@ -71,7 +71,7 @@ open class SKPhotoBrowser: UIViewController {
     
     public convenience init(photos: [SKPhotoProtocol]) {
         self.init(nibName: nil, bundle: nil)
-        let pictures = photos.flatMap { $0 }
+        let pictures = photos.compactMap { $0 }
         for photo in pictures {
             photo.checkCache()
             self.photos.append(photo)
@@ -83,7 +83,7 @@ open class SKPhotoBrowser: UIViewController {
         animator.senderOriginImage = originImage
         animator.senderViewForAnimation = animatedFromView
         
-        let pictures = photos.flatMap { $0 }
+        let pictures = photos.compactMap { $0 }
         for photo in pictures {
             photo.checkCache()
             self.photos.append(photo)
@@ -164,7 +164,7 @@ open class SKPhotoBrowser: UIViewController {
     }
     
     // MARK: - Notification
-    open func handleSKPhotoLoadingDidEndNotification(_ notification: Notification) {
+    @objc open func handleSKPhotoLoadingDidEndNotification(_ notification: Notification) {
         guard let photo = notification.object as? SKPhotoProtocol else {
             return
         }
@@ -217,7 +217,7 @@ open class SKPhotoBrowser: UIViewController {
         NSObject.cancelPreviousPerformRequests(withTarget: self)
     }
     
-    open func dismissPhotoBrowser(animated: Bool, completion: ((Void) -> Void)? = nil) {
+    open func dismissPhotoBrowser(animated: Bool, completion: (() -> Void)? = nil) {
         prepareForClosePhotoBrowser()
         
         if !animated {
@@ -243,7 +243,7 @@ public extension SKPhotoBrowser {
         if closeButton == nil {
             configureCloseButton()
         }
-        closeButton.setImage(image, for: UIControlState())
+        closeButton.setImage(image, for: UIControl.State())
         
         if let size = size {
             closeButton.setFrameSize(size)
@@ -254,7 +254,7 @@ public extension SKPhotoBrowser {
         if deleteButton == nil {
             configureDeleteButton()
         }
-        deleteButton.setImage(image, for: UIControlState())
+        deleteButton.setImage(image, for: UIControl.State())
         
         if let size = size {
             deleteButton.setFrameSize(size)
@@ -331,7 +331,7 @@ public extension SKPhotoBrowser {
         setControlsHidden(true, animated: true, permanent: false)
     }
     
-    func hideControls(_ timer: Timer) {
+    @objc func hideControls(_ timer: Timer) {
         hideControls()
         delegate?.controlsVisibilityToggled?(hidden: true)
     }
@@ -421,7 +421,7 @@ internal extension SKPhotoBrowser {
     func frameForToolbarAtOrientation() -> CGRect {
         let currentOrientation = UIApplication.shared.statusBarOrientation
         var height: CGFloat = navigationController?.navigationBar.frame.size.height ?? 44
-        if UIInterfaceOrientationIsLandscape(currentOrientation) {
+        if currentOrientation.isLandscape {
             height = 32
         }
         return CGRect(x: 0, y: view.bounds.size.height - height, width: view.bounds.size.width, height: height)
@@ -430,7 +430,7 @@ internal extension SKPhotoBrowser {
     func frameForToolbarHideAtOrientation() -> CGRect {
         let currentOrientation = UIApplication.shared.statusBarOrientation
         var height: CGFloat = navigationController?.navigationBar.frame.size.height ?? 44
-        if UIInterfaceOrientationIsLandscape(currentOrientation) {
+        if currentOrientation.isLandscape {
             height = 32
         }
         return CGRect(x: 0, y: view.bounds.size.height + height, width: view.bounds.size.width, height: height)
@@ -448,7 +448,7 @@ internal extension SKPhotoBrowser {
 // MARK: - Internal Function For Button Pressed, UIGesture Control
 
 internal extension SKPhotoBrowser {
-    func panGestureRecognized(_ sender: UIPanGestureRecognizer) {
+    @objc func panGestureRecognized(_ sender: UIPanGestureRecognizer) {
         guard let zoomingScrollView: SKZoomingScrollView = pagingScrollView.pageDisplayedAtIndex(currentPageIndex) else {
             return
         }
@@ -501,7 +501,7 @@ internal extension SKPhotoBrowser {
                 
                 UIView.beginAnimations(nil, context: nil)
                 UIView.setAnimationDuration(animationDuration)
-                UIView.setAnimationCurve(UIViewAnimationCurve.easeIn)
+                UIView.setAnimationCurve(UIView.AnimationCurve.easeIn)
                 view.backgroundColor = SKPhotoBrowserOptions.backgroundColor
                 zoomingScrollView.center = CGPoint(x: finalX, y: finalY)
                 UIView.commitAnimations()
@@ -509,13 +509,13 @@ internal extension SKPhotoBrowser {
         }
     }
     
-    func deleteButtonPressed(_ sender: UIButton) {
+    @objc func deleteButtonPressed(_ sender: UIButton) {
         delegate?.removePhoto?(self, index: currentPageIndex) { [weak self] in
             self?.deleteImage()
         }
     }
     
-    func closeButtonPressed(_ sender: UIButton) {
+    @objc func closeButtonPressed(_ sender: UIButton) {
         determineAndClose()
     }
     
@@ -590,7 +590,7 @@ private extension SKPhotoBrowser {
         let imageName = "ic_nav_back_white"
         let image = UIImage(named: "SKPhotoBrowser.bundle/images/\(imageName)",
             in: Bundle(for: SKPhotoBrowser.self), compatibleWith: nil) ?? UIImage()
-        customCloseButton.setImage(image, for: UIControlState())
+        customCloseButton.setImage(image, for: UIControl.State())
         customCloseButton.addTarget(self, action: #selector(closeButtonPressed(_:)), for: .touchUpInside)
         customCloseButton.isHidden = !SKPhotoBrowserOptions.displayCustomCloseButton
         view.addSubview(customCloseButton)
